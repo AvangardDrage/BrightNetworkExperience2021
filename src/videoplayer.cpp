@@ -181,14 +181,10 @@ void VideoPlayer::addVideoToPlaylist(const std::string& iPlaylistName,
     if (entry.first == inputTitle){
       doesPlaylistExistsFlag = true;
     }
-    std::cout << "[GATE] :";
-    for (auto playlistVideoId : entry.second.playlistVideoIdVec){
-      std::cout << " " << playlistVideoId << " : ";
-      if (playlistVideoId == iVideoId){
+
+    if (entry.second.playlistVideoIdMap.find(iVideoId)!=entry.second.playlistVideoIdMap.end()){
         isVideoInPlaylistFlag = true;
-      }
     }
-    std::cout << std::endl;
   }
 
 
@@ -206,7 +202,7 @@ void VideoPlayer::addVideoToPlaylist(const std::string& iPlaylistName,
       }
       else{
         const auto playlistInMap = videoPlaylistMap.find(inputTitle);
-        (playlistInMap->second).playlistVideoIdVec.push_back(iVideoId);
+        (playlistInMap->second).playlistVideoIdMap.emplace(iVideoId,iVideoId);
         std::cout << "Added video to " << iPlaylistName << ": " << mVideoLibrary.getVideo(iVideoId)->getTitle() << std::endl;
       }
     }
@@ -238,12 +234,12 @@ void VideoPlayer::showPlaylist(const std::string& iPlaylistName) {
   else {
     auto videoPlaylist = videoPlaylistMap.find(inputTitle)->second;
     std::cout << "Showing playlist: " << iPlaylistName << std::endl;
-    if (videoPlaylist.playlistVideoIdVec.empty()){
+    if (videoPlaylist.playlistVideoIdMap.empty()){
       std::cout << "    No videos here yet" << std::endl;
     }
     else{
-      for (auto videoId : videoPlaylist.playlistVideoIdVec)
-      std::cout << "    " << mVideoLibrary.getVideo(videoId)->getVideoInfo();
+      for (auto videoId : videoPlaylist.playlistVideoIdMap)
+      std::cout << "    " << mVideoLibrary.getVideo(videoId.second)->getVideoInfo() << std::endl;
     }
   }
 }
@@ -264,22 +260,13 @@ void VideoPlayer::removeFromPlaylist(const std::string& iPlaylistName,
       std::cout << "Cannot remove video from " <<  iPlaylistName <<": Video does not exist" << std::endl;
     }
     else{
-      auto videoPlaylist = videoPlaylistMap.find(inputTitle)->second;
-      bool isVideoStillBeingRemovedFlag = true;
-      int vecItr = -1;
-      for (auto playlistVideoId : videoPlaylist.playlistVideoIdVec){
-        vecItr++;
-        if (playlistVideoId==iVideoId){
-          videoPlaylist.playlistVideoIdVec.erase(videoPlaylist.playlistVideoIdVec.begin()+vecItr);
-          for (auto playlistVidId : videoPlaylist.playlistVideoIdVec){
-            std::cout << "[GATE]: " << playlistVidId << " : " << std::endl;
-          }
-          std::cout << "Removed video from "<< iPlaylistName <<": " << mVideoLibrary.getVideo(iVideoId)->getTitle() << std::endl;
-          isVideoStillBeingRemovedFlag = false;
-        }
-        if (isVideoStillBeingRemovedFlag){
-          std::cout << "Cannot remove video from "<< iPlaylistName <<": Video is not in playlist" << std::endl;
-        }
+      //auto videoPlaylist = videoPlaylistMap.find(inputTitle);
+      if (videoPlaylistMap.at(inputTitle).playlistVideoIdMap.find(iVideoId) == videoPlaylistMap.at(inputTitle).playlistVideoIdMap.end()){
+        std::cout << "Cannot remove video from "<< iPlaylistName <<": Video is not in playlist" << std::endl;
+      }
+      else {
+        videoPlaylistMap.at(inputTitle).playlistVideoIdMap.erase(iVideoId);
+        std::cout << "Removed video from " << iPlaylistName <<": "<< mVideoLibrary.getVideo(iVideoId)->getTitle() << std::endl;
       }
     }
   }
